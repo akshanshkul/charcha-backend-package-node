@@ -8,6 +8,8 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 const app = express();
 const bcrypt = require("bcrypt");
+const cors = require('cors');
+app.use(cors());
 
 // Load environment variables
 dotenv.config();
@@ -22,7 +24,6 @@ app.use(morgan("combined")); // Logging HTTP requests
 mongoose
   .connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/charcha", {
     useNewUrlParser: true,
-    // useUnifiedTopology: true,
     // useFindAndModify: false,
   })
   .then(() => console.log("MongoDB connected"))
@@ -35,6 +36,9 @@ const userRoutes = require("./routes/user/userRoutes");
 app.use("/api/users", userRoutes);
 const apiRoutes = require("./routes/apiKeyRoutes");
 app.use("/api/key", apiRoutes);
+const adminRoutes = require("./routes/admin/adminRoutes");
+app.use("/api/admin", adminRoutes);
+
 // Basic Route
 app.get("/", (req, res) => {
   res.send("Hello, World!");

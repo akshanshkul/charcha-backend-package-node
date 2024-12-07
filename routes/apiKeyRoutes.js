@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const ApiKey = require('../models/ApiKey');
+const ApiKey = require('../models/apiKey');
 const crypto = require('crypto');
 const apiAuth = require('../middleware/apiAuth');
 
@@ -12,7 +12,8 @@ router.post('/generate',apiAuth, async (req, res) => {
       const description = req.body.description || '';
       const userName = req.body.userName || '';
       const userPost = req.body.userPost || '';
-      const apiKey = new ApiKey({ key: newApiKey, permissions,userName,userPost, description });
+      const type = req.body.type || '';
+      const apiKey = new ApiKey({ key: newApiKey, permissions,userName,userPost, description,type });
       await apiKey.save();
   
       res.status(201).json({ message: 'API key created successfully', apiKey: newApiKey });
@@ -29,6 +30,7 @@ router.get('/',apiAuth, async (req, res) => {
       _id: apiKey._id,
       permissions: apiKey.permissions,
       description: apiKey.description,
+      type: apiKey.type,
       createdAt: apiKey.createdAt
     }));
     res.json(apiKeysResponse);

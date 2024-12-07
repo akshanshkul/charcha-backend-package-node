@@ -11,6 +11,7 @@ const apiKeySchema = new mongoose.Schema({
   description: { type: String },
   createdAt: { type: Date, default: Date.now },
   encryptedKey: { type: String},
+  type: { type: String,required: true },
 });
 
 // Pre-save hook to hash the key before saving

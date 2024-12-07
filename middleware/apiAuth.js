@@ -1,5 +1,5 @@
 // middleware/apiAuth.js
-const ApiKey = require('../models/ApiKey');
+const ApiKey = require('../models/apiKey');
 
 const apiAuth = async (req, res, next) => {
   const authHeader = req.headers['authorization'];

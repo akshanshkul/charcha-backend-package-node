@@ -1,19 +1,17 @@
 // routes/user/userRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const apiAuth = require("../../middleware/apiAuth");
-
 const User = require("../../models/user/user");
-
+const jwt = require("jsonwebtoken");
 // Apply API key authentication middleware
 router.use(apiAuth);
 
 // Register a new user
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, userName } = req.body;
 
     // Check if email already exists
     const existingUser = await User.findOne({ email });
@@ -28,12 +26,51 @@ router.post("/register", async (req, res) => {
     const newUser = new User({
       name,
       email,
+      userName,
       password: hashedPassword,
     });
 
     // Save user to database
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
+// Login user
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Compare the provided password with the hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Send the token and user details as response
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        userName: user.userName,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
@@ -74,6 +111,7 @@ router.put("/update/:id", async (req, res) => {
     });
     if (user) {
       res.json(user);
+
     } else {
       res.status(404).json({ error: "User not found" });
     }
@@ -83,11 +121,31 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // Delete a User
-router.delete("/delete/:id", async (req, res) => {
+// router.delete("/delete/:id", async (req, res) => {
+//   try {
+//     const user = await User.findByIdAndDelete(req.params.id);
+//     if (user) {
+//       res.json({ message: "User deleted" });
+//     } else {
+//       res.status(404).json({ error: "User not found" });
+//     }
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+
+router.patch("/deactivate/:id", async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    // Find the user by ID and update the IsActive field to false
+    const user = await User.findByIdAndUpdate(
+      req.params.id, 
+      { isActive: false },  // Set IsActive to false instead of deleting
+      { new: true }         // Return the updated user object
+    );
+
     if (user) {
-      res.json({ message: "User deleted" });
+      res.json({ message: "User deactivated", user });
     } else {
       res.status(404).json({ error: "User not found" });
     }
@@ -95,6 +153,9 @@ router.delete("/delete/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
 // Follow a user
 router.post("/follow/:id", async (req, res) => {
   try {
@@ -198,5 +259,27 @@ router.get("/follow-check", async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 });
+// Get the total number of followers and following for a user
+router.get("/follower-following-count/:id", async (req, res) => {
+  try {
+    const userId = req.params.id; // The ID of the user whose stats are being fetched
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return the total number of followers and following for the user
+    res.status(200).json({
+      followingCount: user.following.length,
+      followersCount: user.followers.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
+
 
 module.exports = router;

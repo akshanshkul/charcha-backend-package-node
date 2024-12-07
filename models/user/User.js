@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true }, // Password field (ensure proper hashing in practice)
-
+  userName:{type:String,required:true,unique: true},
   // Profile details
   profilePicture: { type: String }, // URL or path to profile picture
   bio: { type: String }, // Short bio or description
